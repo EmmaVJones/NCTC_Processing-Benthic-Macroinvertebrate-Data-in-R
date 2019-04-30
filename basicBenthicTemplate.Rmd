@@ -1,0 +1,49 @@
+---
+title: "Basic Benthic Template"
+author: "Emma Jones"
+date: "4/30/2019"
+output: html_document
+---
+
+```{r setup, include= FALSE, message= FALSE}
+knitr::opts_chunk$set(echo = FALSE) # This line makes sure no R chunks are displayed in the output report
+
+# Bring in necessary packages
+library(tidyverse)
+library(reshape2)
+library(DT)
+library(readxl)
+
+# Bring in custom plotting functions
+source('reportFunctions.R')
+
+# Only report 2 decimal places
+options(digits=2)
+```
+
+```{r readInData,message=FALSE, warning=FALSE}
+# Read in datasets, note these are relative paths vs absolute paths
+
+# field and environmental data
+envData <- read_csv("data/environmentalResults.csv")
+
+# macro data
+bugData <- read_excel("data/benthicResults") %>%
+  dplyr::rename(FamSCI = `Fam SCI`,SampleSeason= `Sample Season`) %>% 
+  filter(RepNum == "1")
+
+# habitat data
+habData<- read_excel("data/habitatResults.xlsx")
+
+#prettyStreamName <- 'Catawba Creek'
+```
+
+
+```{r}
+stats <- read.csv('data/2-CAT027.64/CompositeTable_2018-04-27.csv') %>%
+  filter(Statistic == "Median") %>%
+  dplyr::rename( StationID= Statistic ) %>%
+  mutate(StationID= dplyr::recode(StationID,Median=unique(envData$StationID)))
+
+```
+
