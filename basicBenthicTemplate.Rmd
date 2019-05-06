@@ -2,7 +2,9 @@
 title: "Basic Benthic Template"
 author: "Emma Jones"
 date: "4/30/2019"
-output: html_document
+output: 
+  html_document
+  
 ---
 
 ```{r setup, include= FALSE, message= FALSE}
@@ -10,40 +12,305 @@ knitr::opts_chunk$set(echo = FALSE) # This line makes sure no R chunks are displ
 
 # Bring in necessary packages
 library(tidyverse)
+library(knitr)
 library(reshape2)
 library(DT)
 library(readxl)
+library(sf)
+library(mapview)
+library(plotly)
 
 # Bring in custom plotting functions
-source('reportFunctions.R')
+source('reportFunctions_simple.R')
 
 # Only report 2 decimal places
-options(digits=2)
+#options(digits=2)
 ```
 
-```{r readInData,message=FALSE, warning=FALSE}
+```{r readInData, echo=FALSE, message=FALSE, warning=FALSE}
+
+# What is the name of the stream?
+prettyStreamName <- 'Catawba Creek' ## User Input
+
+
 # Read in datasets, note these are relative paths vs absolute paths
 
 # field and environmental data
-envData <- read_csv("data/environmentalResults.csv")
+envData <- read_csv("data/environmentalResults.csv") %>%
+  mutate(date= as.Date(as.character(CollectionDateTime),format = '%m/%d/%Y'),
+         prettyDate=format(date, format="%B %Y"))
 
-# macro data
-bugData <- read_excel("data/benthicResults") %>%
+# macro data, only keep Replicate 1 for reporting purposes
+bugData <- read_excel("data/benthicResults.xlsx") %>%
   dplyr::rename(FamSCI = `Fam SCI`,SampleSeason= `Sample Season`) %>% 
   filter(RepNum == "1")
 
+# Adjust bug season field to factor for plotting purposes
+bugData$SampleSeason <- factor(bugData$SampleSeason, levels=unique(as.character(bugData$SampleSeason)) )
+
+
 # habitat data
 habData<- read_excel("data/habitatResults.xlsx")
-
-#prettyStreamName <- 'Catawba Creek'
-```
-
-
-```{r}
-stats <- read.csv('data/2-CAT027.64/CompositeTable_2018-04-27.csv') %>%
-  filter(Statistic == "Median") %>%
-  dplyr::rename( StationID= Statistic ) %>%
-  mutate(StationID= dplyr::recode(StationID,Median=unique(envData$StationID)))
+habData$CollDate <- as.Date(as.character(habData$CollDate),format="%Y-%m-%d") # fix date variable
 
 ```
 
+
+
+## Site Overview
+
+This is the section where you could put some basic description information about the site. You can also start to use the inline text feature and have a generic sentence that is automatically updated each time you enter a new dataset. 
+
+For instance, `r prettyStreamName` was sampled `r nrow(bugData)` times for benthic macroinvertebrates and `r nrow(envData)` times for ambient parameters between `r format(min(envData$date), format="%B %Y")` and `r format(max(envData$date), format="%B %Y")`.
+
+Alternatively, you could turn that information into a table to save space. Here are a few quick stats from the datasets.
+
+```{r Quick Site overview, echo=FALSE}
+
+# Organize bug data
+bugTable <- select(bugData, StationID, StreamName, Location, FamSCI) %>% # keep only parameters of interest
+  mutate(`Median VSCI` = format(median(FamSCI), digits = 3), # calculate median
+         `Number of Samples` = n()) %>% # and the number of samples
+  select(-c(FamSCI)) %>% # remove individual scores for overview
+  distinct(`Number of Samples`, .keep_all = TRUE) # keep only 1 row
+
+siteTable <- select(envData, StationID, Longitude, Latitude) %>% # keep only parameters of interest
+  distinct(StationID, .keep_all = TRUE) %>% # limit to one row
+  left_join(bugTable, by = 'StationID') # join with the bugTable informationk with mapview 
+
+kable(t(siteTable), format = "html")
+
+```
+
+
+### Map Option
+And you can give a little interactive map if you'd like.
+
+```{r basic mapview map, fig.width=4, fig.height=4}
+# make the data into a spatial object for plotting on a map
+siteTable_sf <- st_as_sf(siteTable, coords = c("Longitude", "Latitude"),  # make spatial layer using these columns
+                         remove = T, # Remove these lat/lon columns from the dataframe
+                         crs = 4326) # add coordinate reference system, needs to be WQS84 to work with mapview
+
+mapview(siteTable_sf,
+        label= siteTable_sf$StationID, # What field do you want to populate when you mouse over site?
+        layer.name = 'Sample Site', # Rename layer to something pretty for user, siteTable_sf doesnt really mean much to them
+        legend=FALSE) # turn off legend in top right corner
+# there are many more mapview options, this is just the bare bones
+
+```
+
+
+***
+
+## Macroinvertebrate Data
+
+Here is a basic plot of Virginia Stream Condition Index scores for the input dataset. The function the plot is built with can handle more samples if you format your data to match  in input data template. You can also go in and alter the code to change SCI threshold to match your benthic cutoff.
+
+```{r , echo=FALSE,message=FALSE, fig.width=5, fig.height=4, fig.cap=paste("Figure 1: Virginia Stream Condition Index (VSCI) for ", prettyStreamName,". A score of less than or equal to  60 indicates an impaired benthic community. No replicate samples are represented in the dataset.",sep="")}
+
+
+bugDataForPlot <- select(bugData, SampleSeason, FamSCI)
+
+
+ggplot(bugDataForPlot, aes(x=SampleSeason, y=FamSCI))+
+  geom_bar(stat="identity", width = 0.5, position='dodge')+
+  labs(x="Sample Season", y="VSCI") +
+  theme(axis.text=element_text(size=14, face="bold"), legend.text=element_text(size=14),
+        legend.title =   element_text(size=14, face="bold"),
+        axis.title=element_text(size=14, face="bold")) +
+  scale_y_continuous(name="VSCI", breaks=seq(0, 100, 10),limits=c(0,100)) +
+  geom_hline(yintercept=60, color="red", size=1) +  # This is where you would alter where you want your horizontal cutoff
+  theme(axis.text.x=element_text(angle=45,hjust=1))
+
+```
+
+
+
+
+#### Individual Metrics
+
+Depending on your audience, you can present the underlying metrics of your SCI and highlight potential metrics driving the overall score. For Virginia, we like to highlight the lowest two metrics. This is a little tricky, but all the JavaScript logic is taken care of for you in the code if you would like to do something similar to your dataset. The overall SCI score is outlined in gray (demonstrating how to change column background color) and logic to highlight scores below a threshold (with bold and red font) is also overviewed in code.
+
+
+```{r metricScores, echo=FALSE,message=FALSE, fig.width=10, fig.height=4, fig.cap=paste("Table 2: Metric scores used to calculate the VSCI for ", prettyStreamName,". Orange shaded values indicate the two lowest scores that are most likely driving low VSCI scores. Red VSCI scores are below the impairment threshold of 60.",sep="")}
+
+bugScores <- select(bugData, SampleSeason,`%Ephem Score`,`%PT-H Score`,`%Chironomidae Score`,`Fam Richness Score`,
+                    `Fam EPT Score`,`Fam %Scraper Score`,`Fam %2Dom Score`,`Fam %MFBI Score`,FamSCI)
+                    
+bugScores[1:nrow(bugScores),2:10] %>% 
+  datatable(rownames =  as.character(bugScores$SampleSeason),
+            colnames = c("% Ephem Score","% PT- H Score","% Chironomidae Score","Fam Richness Score",
+            "Fam EPT Score","Family %Scraper Score","Family %2 Domniant Score","Family %MFBI Score","VSCI"),
+            options=list(dom= 't',
+                         rowCallback = # the data.length-1) part makes it only calculate each column but VSCI
+                           JS('function(row, data) {
+                               var num_data = data.slice(1,data.length-1)
+                               num_data.sort(function (a, b) {  return a - b;  });
+                               for(i=1;i < data.length; i++) {
+                               if(data[i]==num_data[num_data.length-1]) {
+                               $("td:eq("+i+")", row).css("background-color", "none")
+                               } else if(data[i]==num_data[0]) {
+                               $("td:eq("+i+")", row).css("background-color", "orange")
+                               } else if(data[i]==num_data[1]) {
+                               $("td:eq("+i+")", row).css("background-color", "orange")
+                               }}}') # that is the money JavaScript part that highlights the two lowest cells in a row orange
+                         )) %>% 
+  
+  formatStyle("FamSCI", backgroundColor = "lightgray", color=styleInterval(c(60),c('red','black')),
+              fontWeight = styleInterval(c(60),c('bold','normal'))) %>% # background color, font color, and font weight alterations
+  
+  formatRound(c("%Ephem Score","%PT-H Score","%Chironomidae Score","Fam Richness Score","Fam EPT Score","Fam %Scraper Score",
+                "Fam %2Dom Score","Fam %MFBI Score","FamSCI"), 2) # round all metrics to two decimal places
+
+
+```
+
+
+
+## Ambient Data
+
+#### pH
+
+You can include some basic plots of all the ambient data you have collected throughout the input dataset. You can also use inline text again to overview the data automatically. E.g. `r prettyStreamName` was sampled for pH data between `r format(min(envData$date),"%Y")` and `r format(max(envData$date),"%Y")`. pH measurements in `r prettyStreamName` ranged from `r min(envData$'pH (unitless)', na.rm=TRUE)` -  `r max(envData$'pH (unitless)', na.rm=TRUE)` with a median value of `r median(envData$'pH (unitless)', na.rm=TRUE)` (n=`r nrow(envData[!is.na(envData$'pH (unitless)'), ])`) (Figure 2). 
+
+Code for a basic ggplot is included. If you have cutoffs for certain parameters, you can go in to the parameter settings section to play with the background colors and zones. Note the difference between the pH plot and the DO plot. The background thresholds add a lot of context if you can add them.
+
+```{r pH, echo=FALSE,message=FALSE, fig.width=10, fig.height=4, fig.cap=paste("Figure 2: Describe pH data here.")}
+# basic 
+gMasterPlot(envData,'pH (unitless)','3 month')
+```
+
+#### Dissolved Oxygen
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Dissolved Oxygen in `r prettyStreamName` ranged from `r min(envData$'DO (mg/L)', na.rm=TRUE)` -  `r max(envData$'DO (mg/L)', na.rm=TRUE)` mg/L.  The median dissolved oxygen value was `r median(envData$'DO (mg/L)', na.rm=TRUE)`mg/L (n=`r nrow(envData[!is.na(envData$'DO (mg/L)'), ])`) (Figure 7). 
+
+
+```{r DO, echo=FALSE,message=FALSE, fig.width=7, fig.height=6, fig.cap=paste("Figure 3: Describe DO data here.")}
+# with thresholds
+gMasterPlot(envData,'DO (mg/L)','3 month')
+```
+
+## Sneaky Way to Save Space {#buttons .tabset .tabset-fade .tabset-pills}
+
+***
+Save space in your document using buttons or tabs for sub sections IF YOU PLAN ON DISTRIBUTING REPORT AS HTML DOCUMENT. Result can look like this:
+
+### Total Nitrogen 
+
+Total nitrogen ranged from `r min(envData$'TN (mg/L)', na.rm=TRUE)` -  `r max(envData$'TN (mg/L)', na.rm=TRUE)` mg/L with a median of `r median(envData$'TN (mg/L)', na.rm=TRUE)` mg/L (n= `r nrow(envData[!is.na(envData$'TN (mg/L)'), ])`) (Figure 9). 
+
+```{r TN, echo=FALSE,message=FALSE, fig.width=9, fig.height=6, fig.cap=paste("Figure 4: Describe TN data here.")}
+gMasterPlot(envData,'TN (mg/L)','3 month')
+```
+
+
+
+***
+
+### Total Dissolved Solids
+
+Total dissolved solids measurements in `r prettyStreamName` ranged from `r min(envData$"TDS (mg/L)", na.rm=TRUE)` -  `r max(envData$"TDS (mg/L)", na.rm=TRUE)` mg/L (Figure 14). The median TDS value was `r median(envData$"TDS (mg/L)", na.rm=TRUE)` mg/L  (n=`r nrow(envData[!is.na(envData$"TDS (mg/L)"), ])`). 
+
+```{r TDS, echo=FALSE,message=FALSE, fig.width=9, fig.height=6, fig.cap=paste("Figure 14: Describe TDS data here.")}
+gMasterPlot(envData,"TDS (mg/L)",'3 month')
+```
+
+***
+
+
+### Specific Conductivity
+
+Specific Conductivity measurements in `r prettyStreamName` ranged from `r min(envData$"SpCond (uS/cm)", na.rm=TRUE)` -  `r max(envData$"SpCond (uS/cm)", na.rm=TRUE)` uS/cm (Figure 13). The median specific conductivity value was `r median(envData$"SpCond (uS/cm)", na.rm=TRUE)` uS/cm  (n=`r nrow(envData[!is.na(envData$"SpCond (uS/cm)"), ])`). 
+
+```{r SpCond, echo=FALSE,message=FALSE, fig.width=9, fig.height=6, fig.cap=paste("Figure 6: Describe SpCond data here.")}
+gMasterPlot(envData,"SpCond (uS/cm)",'3 month')
+```
+
+
+
+
+***
+
+<br><br>
+
+## Total Habitat
+
+
+If you are planning on distributing report as an HTML document, I recommend interactive plots with plotly. Below is an example with the total habitat scores. 
+
+`r prettyStreamName` total habitat scores ranged from `r min(envData$'Total Habitat (unitless)', na.rm=TRUE)` -  `r max(envData$'Total Habitat (unitless)', na.rm=TRUE)` and the median value was `r median(envData$'Total Habitat (unitless)', na.rm=TRUE)`(n=`r nrow(envData[!is.na(envData$'Total Habitat (unitless)'), ])`) (Figure 9). 
+
+```{r , echo=FALSE,message=FALSE, fig.width=9, fig.height=6, fig.cap=paste("Figure 10: Describe Total Habitat data here.")}
+ 
+totalHabitat <- filter(envData, !is.na(`Total Habitat (unitless)`)) # filter to just records with total habitat data
+totalHabitat$SampleDate <- as.POSIXct(totalHabitat$CollectionDateTime, format="%m/%d/%Y") # convert date time to useable format for plotly
+    
+box1 <- data.frame(SampleDate = c(min(totalHabitat$SampleDate), min(totalHabitat$SampleDate), max(totalHabitat$SampleDate),max(totalHabitat$SampleDate)), 
+                   y = c(150, 250, 250, 150))
+box2 <- data.frame(x = c(min(totalHabitat$SampleDate), min(totalHabitat$SampleDate), max(totalHabitat$SampleDate),max(totalHabitat$SampleDate)),
+                   y = c(130, 150, 150, 130))
+box3 <- data.frame(x = c(min(totalHabitat$SampleDate), min(totalHabitat$SampleDate), max(totalHabitat$SampleDate),max(totalHabitat$SampleDate)), 
+                   y = c(100, 130, 130, 100))
+box4 <- data.frame(x = c(min(totalHabitat$SampleDate), min(totalHabitat$SampleDate), max(totalHabitat$SampleDate),max(totalHabitat$SampleDate)), 
+                   y = c(0, 100, 100, 0))
+    
+# plotly plot    
+plot_ly(data=totalHabitat) %>%
+  add_polygons(x = ~SampleDate, y = ~y, data = box1, fillcolor = "firebrick",opacity=0.6, line = list(width = 0),
+                   hoverinfo="text", name =paste('High Probability of Stress to Aquatic Life')) %>%
+      add_polygons(data = box2, x = ~x, y = ~y, fillcolor = "#F0E442",opacity=0.6, line = list(width = 0),
+                   hoverinfo="text", name =paste('Medium Probability of Stress to Aquatic Life')) %>%
+      add_polygons(data = box3, x = ~x, y = ~y, fillcolor = "#009E73",opacity=0.6, line = list(width = 0),
+                   hoverinfo="text", name =paste('Low Probability of Stress to Aquatic Life')) %>%
+      add_polygons(data = box4, x = ~x, y = ~y, fillcolor = "#0072B2",opacity=0.6, line = list(width = 0),
+                   hoverinfo="text", name =paste('No Probability of Stress to Aquatic Life')) %>%
+      add_markers(data=totalHabitat, x= ~SampleDate, y= ~`Total Habitat (unitless)`,mode = 'scatter',
+                  name="Total Habitat (unitless)",marker = list(color= '#535559'),
+                  hoverinfo="text",text=~paste(sep="<br>",
+                                               paste("Date: ",SampleDate),
+                                               paste("Total Habitat : ",`Total Habitat (unitless)`,"(unitless)")))%>%
+      layout(showlegend=FALSE,
+             yaxis=list(title="Total Habitat (unitless)"),
+             xaxis=list(title="Sample Date",tickfont = list(size = 10)))
+
+```
+
+
+### Total Habitat Heatmap
+
+Further analysis of the the individual metrics (scored 1-20) that make up the qualitative total habitat score are visible in the heatmap below (Table 6). Darker colors indicate lower habitat metric scores.
+
+```{r habitatHeatmap, echo=FALSE,message=FALSE, fig.cap="Table 2: Qualitative habitat measurements taken during biological monitoring. The lighter red colors represent habitat scores that are optimal or suboptimal and progressively darker red colors represent marginal or poor habitat scores."}
+
+# Set how many colors you will use and call them out by hex name
+brks <- 1:19
+clrs <- c("#8B0000", "#9D0000", "#AF0000", "#C10000", "#D40000", "#E60000", "#F80000", "#FF1415", "#FF3235", "#FF5055", "#FF6F75",
+          "#FF8D95", "#FFABB5", "#FFC3CD", "#FFCDD5", "#FFD7DE", "#FFE1E6", "#FFEBEE", "#FFF5F6", "#FFFFFF")
+
+
+totHabData <- select(habData,StationID,CollDate,TotHabSc)[!duplicated(select(habData,StationID,CollDate,TotHabSc)),] # get unique sample dates
+
+habDataForTable <- select(habData,-c(TotHabSc)) %>% # these two fields can cause multiple rows for each date in the spread() step, so get rid of them for now
+  filter(HabParameter %in% c('ALTER','BANKS','BANKVEG','COVER','EMBED','FLOW','RIFFLES','RIPVEG','SEDIMENT',
+                             'SUBSTRATE','VELOCITY')) %>% # get only high gradient parameters 
+  spread(HabParameter,HabValue) %>%
+  filter(!is.na(EMBED) & !is.na(RIFFLES) & !is.na(VELOCITY)) %>% # if both methods used then get rid of sample dates not sampled as high gradient
+  rowwise()%>%
+  left_join(totHabData, by=c("StationID","CollDate")) %>%
+  dplyr::rename(TotalHabitat = TotHabSc) %>%
+  arrange(CollDate)
+
+DT::datatable(habDataForTable,escape=F, rownames = F, colnames = c('Station ID','Date','Channel Alteration','Banks', 
+                                                                   'Bank Vegetation', 'Embeddedness', 
+                                                                   'Flow', 'Riffles', 'Riparian Vegetation', 
+                                                                   'Sediment', 'Substrate','Velocity', 'Total Habitat'),
+              options=list(pageLength=nrow(habDataForTable),dom= 'Bt' )) %>%
+  formatStyle(names(habDataForTable)[3:12], backgroundColor = styleInterval(brks, clrs), 
+              textAlign = 'center', `font-family` = 'Arial') %>%
+  formatStyle(names(habDataForTable), fontWeight = styleInterval(10, c('bold','normal')), 
+              textAlign = 'center', `font-family` = 'Arial') %>%
+  formatStyle('TotalHabitat', backgroundColor = "lightgray")
+
+
+```
