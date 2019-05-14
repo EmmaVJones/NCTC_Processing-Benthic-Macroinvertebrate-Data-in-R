@@ -13,7 +13,6 @@ knitr::opts_chunk$set(echo = FALSE) # This line makes sure no R chunks are displ
 # Bring in necessary packages
 library(tidyverse)
 library(knitr)
-library(reshape2)
 library(DT)
 library(readxl)
 library(sf)

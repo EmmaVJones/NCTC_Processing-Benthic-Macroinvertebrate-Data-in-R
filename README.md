@@ -6,29 +6,35 @@ Description: An outline of the basics of building Rmarkdown reports for benthic 
 
 All scripts, data, and presentation slides for this workshop are available on this page. 
 
-To follow along with the hands on portion of the workshop, please clone or download the project as a zip file. If you are new to git, the easiest way to get the data from the repository to your computer is to click the green 'Clone or download' button and unzip the file locally that is easy to navigate to.
+To follow along with the hands on portion of the workshop, please clone or download the project as a zip file. If you are new to git, the easiest way to get the data from the repository to your computer is to click the green 'Clone or download' button and unzip the file locally in a place that is easy to navigate back to.
 
 ![Capture](https://user-images.githubusercontent.com/16804416/57715703-560ca100-7645-11e9-8e65-c01fe11b8dcc.PNG)
 
+You will need to have R and RStudio installed prior to the session. Please install R first if you have never installed either software before. R does not need administrative permissions to install. RStudio requires admin privleges, so please plan accordingly.
 
+To install R version 3.6.0 : https://cran.r-project.org/bin/windows/base/
+Download and install accepting all defaults.
 
+To install RStudio Version 1.2.1335 : https://www.rstudio.com/products/rstudio/download/#download
+Download and install accepting all defaults.
+
+To install all packages necessary for the workshop (after R and RStudio are installed):
+1) Navigate to the directory where you saved the unzipped github repository (NCTC_Processing-Benthic-Macroinvertebrate-Data-in-R-master).
+2) Double click the file named NCTC_Processing-Benthic-Macroinvertebrate-Data-in-R.Rproj (this will open RStudio)
+3) File -> Open File... and choose installPackages.R
+4) Select all the rows press the 'Run' button in the top right of the screen (circled in blue in the picture below).
+
+![Capture2](https://user-images.githubusercontent.com/16804416/57716714-9705b500-7647-11e9-9d8b-49da8157afe4.PNG)
+
+You will see a few GUI popups and a lot of code running in the console (bottom of the RStudio screen). If you are asked which CRAN mirror you want to use, please select the location that is closest to your normal work location.
+
+When the console has finished running all the code and you see a 
+
+![Capture4](https://user-images.githubusercontent.com/16804416/57717109-7b4ede80-7648-11e9-9e3e-8ea623e105fe.PNG)
+
+you are done. You are ready for the workshop.
 
 
 This project was built using the following R version/libraries:
 
-R version 3.5.2 (2018-12-20)
-Platform: x86_64-w64-mingw32/x64 (64-bit)
-Running under: Windows 7 x64 (build 7601) Service Pack 1
-
-Matrix products: default
-
-locale:
-[1] LC_COLLATE=English_United States.1252  LC_CTYPE=English_United States.1252    LC_MONETARY=English_United States.1252 LC_NUMERIC=C                          
-[5] LC_TIME=English_United States.1252    
-
-attached base packages:
-[1] stats     graphics  grDevices utils     datasets  methods   base     
-
-other attached packages:
- [1] plotly_4.8.0    mapview_2.6.3   sf_0.7-2        readxl_1.2.0    DT_0.5          reshape2_1.4.3  knitr_1.21      forcats_0.3.0   stringr_1.4.0   dplyr_0.7.8    
-[11] purrr_0.3.0     readr_1.3.1     tidyr_0.8.2     tibble_2.0.1    ggplot2_3.1.0   tidyverse_1.2.1
+![Capture3](https://user-images.githubusercontent.com/16804416/57717061-5d817980-7648-11e9-81fa-1dc2a39020b6.PNG)
