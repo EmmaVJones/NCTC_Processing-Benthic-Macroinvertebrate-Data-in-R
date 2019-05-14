@@ -1,7 +1,18 @@
 # NCTC_Processing-Benthic-Macroinvertebrate-Data-in-R
 This repository holds data and scripts for the Processing Benthic Macroinvertebrate Data in R workshop given at NCTC on May 29, 2019. 
 
-Description: An outline of the basics of building Rmarkdown reports for benthic datasets, showcasing the power of combining interactive analytical tools (Shiny) with automated reports (Rmarkdown) using probabilistic monitoring data to inform the benthic stressor analysis process in Virginia
+Description: An outline of the basics of building Rmarkdown reports for benthic datasets, showcasing the power of combining interactive analytical tools (Shiny) with automated reports (Rmarkdown) using probabilistic monitoring data to inform the benthic stressor analysis process in Virginia.
+
+
+All scripts, data, and presentation slides for this workshop are available on this page. 
+
+To follow along with the hands on portion of the workshop, please clone or download the project as a zip file. If you are new to git, the easiest way to get the data from the repository to your computer is to click the green 'Clone or download' button and unzip the file locally that is easy to navigate to.
+
+![Capture](https://user-images.githubusercontent.com/16804416/57715703-560ca100-7645-11e9-8e65-c01fe11b8dcc.PNG)
+
+
+
+
 
 This project was built using the following R version/libraries:
 
