@@ -248,13 +248,13 @@ totalHabitat <- filter(envData, !is.na(`Total Habitat (unitless)`)) # filter to 
 totalHabitat$SampleDate <- as.POSIXct(totalHabitat$CollectionDateTime, format="%m/%d/%Y") # convert date time to useable format for plotly
     
 box1 <- data.frame(SampleDate = c(min(totalHabitat$SampleDate), min(totalHabitat$SampleDate), max(totalHabitat$SampleDate),max(totalHabitat$SampleDate)), 
-                   y = c(150, 250, 250, 150))
-box2 <- data.frame(x = c(min(totalHabitat$SampleDate), min(totalHabitat$SampleDate), max(totalHabitat$SampleDate),max(totalHabitat$SampleDate)),
-                   y = c(130, 150, 150, 130))
-box3 <- data.frame(x = c(min(totalHabitat$SampleDate), min(totalHabitat$SampleDate), max(totalHabitat$SampleDate),max(totalHabitat$SampleDate)), 
-                   y = c(100, 130, 130, 100))
-box4 <- data.frame(x = c(min(totalHabitat$SampleDate), min(totalHabitat$SampleDate), max(totalHabitat$SampleDate),max(totalHabitat$SampleDate)), 
                    y = c(0, 100, 100, 0))
+box2 <- data.frame(x = c(min(totalHabitat$SampleDate), min(totalHabitat$SampleDate), max(totalHabitat$SampleDate),max(totalHabitat$SampleDate)),
+                   y = c(100, 130, 130, 100))
+box3 <- data.frame(x = c(min(totalHabitat$SampleDate), min(totalHabitat$SampleDate), max(totalHabitat$SampleDate),max(totalHabitat$SampleDate)), 
+                   y = c(130, 150, 150, 130))
+box4 <- data.frame(x = c(min(totalHabitat$SampleDate), min(totalHabitat$SampleDate), max(totalHabitat$SampleDate),max(totalHabitat$SampleDate)), 
+                   y = c(150, 200, 200, 150)) 
     
 # plotly plot    
 plot_ly(data=totalHabitat) %>%
@@ -280,7 +280,7 @@ plot_ly(data=totalHabitat) %>%
 
 ### Total Habitat Heatmap
 
-Further analysis of the the individual metrics (scored 1-20) that make up the qualitative total habitat score are visible in the heatmap below (Table 6). Darker colors indicate lower habitat metric scores.
+Further analysis of the the individual metrics (scored 1-20) that make up the qualitative total habitat score are visible in the heatmap below (Table 2). Darker colors indicate lower habitat metric scores.
 
 ```{r habitatHeatmap, echo=FALSE,message=FALSE, fig.cap="Table 2: Qualitative habitat measurements taken during biological monitoring. The lighter red colors represent habitat scores that are optimal or suboptimal and progressively darker red colors represent marginal or poor habitat scores."}
 
