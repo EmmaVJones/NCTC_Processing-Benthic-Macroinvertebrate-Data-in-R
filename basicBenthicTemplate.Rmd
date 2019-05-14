@@ -23,7 +23,7 @@ library(plotly)
 # Bring in custom plotting functions
 source('reportFunctions_simple.R')
 
-# Only report 2 decimal places
+# Only report 2 decimal places if you take the comment out
 #options(digits=2)
 ```
 
@@ -36,12 +36,12 @@ prettyStreamName <- 'Catawba Creek' ## User Input
 # Read in datasets, note these are relative paths vs absolute paths
 
 # field and environmental data
-envData <- read_csv("data/environmentalResults.csv") %>%
+envData <- read_csv("data/environmentalResults_1.csv", col_types = cols(CollectionDateTime = "c")) %>%
   mutate(date= as.Date(as.character(CollectionDateTime),format = '%m/%d/%Y'),
          prettyDate=format(date, format="%B %Y"))
 
 # macro data, only keep Replicate 1 for reporting purposes
-bugData <- read_excel("data/benthicResults.xlsx") %>%
+bugData <- read_excel("data/benthicResults_1.xlsx") %>%
   dplyr::rename(FamSCI = `Fam SCI`,SampleSeason= `Sample Season`) %>% 
   filter(RepNum == "1")
 
@@ -50,7 +50,7 @@ bugData$SampleSeason <- factor(bugData$SampleSeason, levels=unique(as.character(
 
 
 # habitat data
-habData<- read_excel("data/habitatResults.xlsx")
+habData<- read_excel("data/habitatResults_1.xlsx")
 habData$CollDate <- as.Date(as.character(habData$CollDate),format="%Y-%m-%d") # fix date variable
 
 ```
@@ -105,7 +105,7 @@ mapview(siteTable_sf,
 
 ## Macroinvertebrate Data
 
-Here is a basic plot of Virginia Stream Condition Index scores for the input dataset. The function the plot is built with can handle more samples if you format your data to match  in input data template. You can also go in and alter the code to change SCI threshold to match your benthic cutoff.
+Here is a basic plot of Family level Virginia Stream Condition Index scores for the input dataset. The function the plot is built with can handle more samples if you format your data to match  in input data template. You can also go in and alter the code to change SCI threshold to match your benthic cutoff.
 
 ```{r , echo=FALSE,message=FALSE, fig.width=5, fig.height=4, fig.cap=paste("Figure 1: Virginia Stream Condition Index (VSCI) for ", prettyStreamName,". A score of less than or equal to  60 indicates an impaired benthic community. No replicate samples are represented in the dataset.",sep="")}
 
@@ -183,7 +183,7 @@ gMasterPlot(envData,'pH (unitless)','3 month')
 
 #### Dissolved Oxygen
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Dissolved Oxygen in `r prettyStreamName` ranged from `r min(envData$'DO (mg/L)', na.rm=TRUE)` -  `r max(envData$'DO (mg/L)', na.rm=TRUE)` mg/L.  The median dissolved oxygen value was `r median(envData$'DO (mg/L)', na.rm=TRUE)`mg/L (n=`r nrow(envData[!is.na(envData$'DO (mg/L)'), ])`) (Figure 7). 
+Dissolved Oxygen in `r prettyStreamName` ranged from `r min(envData$'DO (mg/L)', na.rm=TRUE)` -  `r max(envData$'DO (mg/L)', na.rm=TRUE)` mg/L.  The median dissolved oxygen value was `r median(envData$'DO (mg/L)', na.rm=TRUE)` mg/L (n=`r nrow(envData[!is.na(envData$'DO (mg/L)'), ])`) (Figure 3). 
 
 
 ```{r DO, echo=FALSE,message=FALSE, fig.width=7, fig.height=6, fig.cap=paste("Figure 3: Describe DO data here.")}
@@ -194,11 +194,11 @@ gMasterPlot(envData,'DO (mg/L)','3 month')
 ## Sneaky Way to Save Space {#buttons .tabset .tabset-fade .tabset-pills}
 
 ***
-Save space in your document using buttons or tabs for sub sections IF YOU PLAN ON DISTRIBUTING REPORT AS HTML DOCUMENT. Result can look like this:
+Save space in your document using buttons or tabs for sub sections **IF YOU PLAN ON DISTRIBUTING REPORT AS HTML DOCUMENT**. Result can look like this:
 
 ### Total Nitrogen 
 
-Total nitrogen ranged from `r min(envData$'TN (mg/L)', na.rm=TRUE)` -  `r max(envData$'TN (mg/L)', na.rm=TRUE)` mg/L with a median of `r median(envData$'TN (mg/L)', na.rm=TRUE)` mg/L (n= `r nrow(envData[!is.na(envData$'TN (mg/L)'), ])`) (Figure 9). 
+Total nitrogen in `r prettyStreamName` ranged from `r min(envData$'TN (mg/L)', na.rm=TRUE)` -  `r max(envData$'TN (mg/L)', na.rm=TRUE)` mg/L with a median of `r median(envData$'TN (mg/L)', na.rm=TRUE)` mg/L (n= `r nrow(envData[!is.na(envData$'TN (mg/L)'), ])`) (Figure 4). 
 
 ```{r TN, echo=FALSE,message=FALSE, fig.width=9, fig.height=6, fig.cap=paste("Figure 4: Describe TN data here.")}
 gMasterPlot(envData,'TN (mg/L)','3 month')
@@ -210,9 +210,9 @@ gMasterPlot(envData,'TN (mg/L)','3 month')
 
 ### Total Dissolved Solids
 
-Total dissolved solids measurements in `r prettyStreamName` ranged from `r min(envData$"TDS (mg/L)", na.rm=TRUE)` -  `r max(envData$"TDS (mg/L)", na.rm=TRUE)` mg/L (Figure 14). The median TDS value was `r median(envData$"TDS (mg/L)", na.rm=TRUE)` mg/L  (n=`r nrow(envData[!is.na(envData$"TDS (mg/L)"), ])`). 
+Total dissolved solids measurements in `r prettyStreamName` ranged from `r min(envData$"TDS (mg/L)", na.rm=TRUE)` -  `r max(envData$"TDS (mg/L)", na.rm=TRUE)` mg/L (Figure 5). The median TDS value was `r median(envData$"TDS (mg/L)", na.rm=TRUE)` mg/L  (n=`r nrow(envData[!is.na(envData$"TDS (mg/L)"), ])`). 
 
-```{r TDS, echo=FALSE,message=FALSE, fig.width=9, fig.height=6, fig.cap=paste("Figure 14: Describe TDS data here.")}
+```{r TDS, echo=FALSE,message=FALSE, fig.width=9, fig.height=6, fig.cap=paste("Figure 5: Describe TDS data here.")}
 gMasterPlot(envData,"TDS (mg/L)",'3 month')
 ```
 
@@ -221,7 +221,7 @@ gMasterPlot(envData,"TDS (mg/L)",'3 month')
 
 ### Specific Conductivity
 
-Specific Conductivity measurements in `r prettyStreamName` ranged from `r min(envData$"SpCond (uS/cm)", na.rm=TRUE)` -  `r max(envData$"SpCond (uS/cm)", na.rm=TRUE)` uS/cm (Figure 13). The median specific conductivity value was `r median(envData$"SpCond (uS/cm)", na.rm=TRUE)` uS/cm  (n=`r nrow(envData[!is.na(envData$"SpCond (uS/cm)"), ])`). 
+Specific Conductivity measurements in `r prettyStreamName` ranged from `r min(envData$"SpCond (uS/cm)", na.rm=TRUE)` -  `r max(envData$"SpCond (uS/cm)", na.rm=TRUE)` uS/cm (Figure 6). The median specific conductivity value was `r median(envData$"SpCond (uS/cm)", na.rm=TRUE)` uS/cm  (n=`r nrow(envData[!is.na(envData$"SpCond (uS/cm)"), ])`). 
 
 ```{r SpCond, echo=FALSE,message=FALSE, fig.width=9, fig.height=6, fig.cap=paste("Figure 6: Describe SpCond data here.")}
 gMasterPlot(envData,"SpCond (uS/cm)",'3 month')
@@ -237,11 +237,12 @@ gMasterPlot(envData,"SpCond (uS/cm)",'3 month')
 ## Total Habitat
 
 
-If you are planning on distributing report as an HTML document, I recommend interactive plots with plotly. Below is an example with the total habitat scores. 
+If you are planning on distributing report as an HTML document, I recommend using interactive plots with the plotly package. The plots stay interactive even as you distribute the .html file. I find if very useful for larger datasets where users may want to zoom in/out of certain areas and especially with time series data. Below is an example with the total habitat scores. 
 
-`r prettyStreamName` total habitat scores ranged from `r min(envData$'Total Habitat (unitless)', na.rm=TRUE)` -  `r max(envData$'Total Habitat (unitless)', na.rm=TRUE)` and the median value was `r median(envData$'Total Habitat (unitless)', na.rm=TRUE)`(n=`r nrow(envData[!is.na(envData$'Total Habitat (unitless)'), ])`) (Figure 9). 
 
-```{r , echo=FALSE,message=FALSE, fig.width=9, fig.height=6, fig.cap=paste("Figure 10: Describe Total Habitat data here.")}
+`r prettyStreamName` total habitat scores ranged from `r min(envData$'Total Habitat (unitless)', na.rm=TRUE)` -  `r max(envData$'Total Habitat (unitless)', na.rm=TRUE)` and the median value was `r median(envData$'Total Habitat (unitless)', na.rm=TRUE)`(n=`r nrow(envData[!is.na(envData$'Total Habitat (unitless)'), ])`) (Figure 7). 
+
+```{r , echo=FALSE,message=FALSE, fig.width=9, fig.height=6, fig.cap=paste("Figure 7: Describe Total Habitat data here.")}
  
 totalHabitat <- filter(envData, !is.na(`Total Habitat (unitless)`)) # filter to just records with total habitat data
 totalHabitat$SampleDate <- as.POSIXct(totalHabitat$CollectionDateTime, format="%m/%d/%Y") # convert date time to useable format for plotly
