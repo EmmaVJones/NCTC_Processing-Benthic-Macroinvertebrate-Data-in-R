@@ -37,4 +37,4 @@ you are done. You are ready for the workshop.
 
 This project was built using the following R version/libraries:
 
-![Capture3](https://user-images.githubusercontent.com/16804416/57717061-5d817980-7648-11e9-81fa-1dc2a39020b6.PNG)
+![Capture](https://user-images.githubusercontent.com/16804416/57940059-ada34a80-7899-11e9-8fa2-69cd8905ef60.PNG)
