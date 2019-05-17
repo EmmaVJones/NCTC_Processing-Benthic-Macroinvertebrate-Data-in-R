@@ -18,6 +18,7 @@ library(readxl)
 library(sf)
 library(mapview)
 library(plotly)
+library(lubridate)
 
 # Bring in custom plotting functions
 source('reportFunctions_simple.R')
@@ -102,6 +103,8 @@ mapview(siteTable_sf,
 
 ***
 
+
+
 ## Macroinvertebrate Data
 
 Here is a basic plot of Family level Virginia Stream Condition Index scores for the input dataset. The function the plot is built with can handle more samples if you format your data to match  in input data template. You can also go in and alter the code to change SCI threshold to match your benthic cutoff.
@@ -125,14 +128,14 @@ ggplot(bugDataForPlot, aes(x=SampleSeason, y=FamSCI))+
 ```
 
 
-
+<br><br><br>
 
 #### Individual Metrics
 
 Depending on your audience, you can present the underlying metrics of your SCI and highlight potential metrics driving the overall score. For Virginia, we like to highlight the lowest two metrics. This is a little tricky, but all the JavaScript logic is taken care of for you in the code if you would like to do something similar to your dataset. The overall SCI score is outlined in gray (demonstrating how to change column background color) and logic to highlight scores below a threshold (with bold and red font) is also overviewed in code.
 
 
-```{r metricScores, echo=FALSE,message=FALSE, fig.width=10, fig.height=4, fig.cap=paste("Table 2: Metric scores used to calculate the VSCI for ", prettyStreamName,". Orange shaded values indicate the two lowest scores that are most likely driving low VSCI scores. Red VSCI scores are below the impairment threshold of 60.",sep="")}
+```{r metricScores, echo=FALSE,message=FALSE, fig.width=10, fig.height=4, fig.cap=paste("Table 1: Metric scores used to calculate the VSCI for ", prettyStreamName,". Orange shaded values indicate the two lowest scores that are most likely driving low VSCI scores. Red VSCI scores are below the impairment threshold of 60.",sep="")}
 
 bugScores <- select(bugData, SampleSeason,`%Ephem Score`,`%PT-H Score`,`%Chironomidae Score`,`Fam Richness Score`,
                     `Fam EPT Score`,`Fam %Scraper Score`,`Fam %2Dom Score`,`Fam %MFBI Score`,FamSCI)
@@ -246,24 +249,36 @@ If you are planning on distributing report as an HTML document, I recommend usin
 totalHabitat <- filter(envData, !is.na(`Total Habitat (unitless)`)) # filter to just records with total habitat data
 totalHabitat$SampleDate <- as.POSIXct(totalHabitat$CollectionDateTime, format="%m/%d/%Y") # convert date time to useable format for plotly
     
-box1 <- data.frame(SampleDate = c(min(totalHabitat$SampleDate), min(totalHabitat$SampleDate), max(totalHabitat$SampleDate),max(totalHabitat$SampleDate)), 
+box1 <- data.frame(SampleDate = c(min(totalHabitat$SampleDate) - months(1), 
+                                  min(totalHabitat$SampleDate) - months(1), 
+                                  max(totalHabitat$SampleDate) + months(1),
+                                  max(totalHabitat$SampleDate) + months(1)), 
                    y = c(0, 100, 100, 0))
-box2 <- data.frame(x = c(min(totalHabitat$SampleDate), min(totalHabitat$SampleDate), max(totalHabitat$SampleDate),max(totalHabitat$SampleDate)),
+box2 <- data.frame(SampleDate = c(min(totalHabitat$SampleDate) - months(1), 
+                                  min(totalHabitat$SampleDate) - months(1), 
+                                  max(totalHabitat$SampleDate) + months(1),
+                                  max(totalHabitat$SampleDate) + months(1)), 
                    y = c(100, 130, 130, 100))
-box3 <- data.frame(x = c(min(totalHabitat$SampleDate), min(totalHabitat$SampleDate), max(totalHabitat$SampleDate),max(totalHabitat$SampleDate)), 
+box3 <- data.frame(SampleDate = c(min(totalHabitat$SampleDate) - months(1), 
+                                  min(totalHabitat$SampleDate) - months(1), 
+                                  max(totalHabitat$SampleDate) + months(1),
+                                  max(totalHabitat$SampleDate) + months(1)), 
                    y = c(130, 150, 150, 130))
-box4 <- data.frame(x = c(min(totalHabitat$SampleDate), min(totalHabitat$SampleDate), max(totalHabitat$SampleDate),max(totalHabitat$SampleDate)), 
+box4 <- data.frame(SampleDate = c(min(totalHabitat$SampleDate) - months(1), 
+                                  min(totalHabitat$SampleDate) - months(1), 
+                                  max(totalHabitat$SampleDate) + months(1),
+                                  max(totalHabitat$SampleDate) + months(1)), 
                    y = c(150, 200, 200, 150)) 
     
 # plotly plot    
 plot_ly(data=totalHabitat) %>%
   add_polygons(x = ~SampleDate, y = ~y, data = box1, fillcolor = "firebrick",opacity=0.6, line = list(width = 0),
                    hoverinfo="text", name =paste('High Probability of Stress to Aquatic Life')) %>%
-      add_polygons(data = box2, x = ~x, y = ~y, fillcolor = "#F0E442",opacity=0.6, line = list(width = 0),
+      add_polygons(data = box2, x = ~SampleDate, y = ~y, fillcolor = "#F0E442",opacity=0.6, line = list(width = 0),
                    hoverinfo="text", name =paste('Medium Probability of Stress to Aquatic Life')) %>%
-      add_polygons(data = box3, x = ~x, y = ~y, fillcolor = "#009E73",opacity=0.6, line = list(width = 0),
+      add_polygons(data = box3, x = ~SampleDate, y = ~y, fillcolor = "#009E73",opacity=0.6, line = list(width = 0),
                    hoverinfo="text", name =paste('Low Probability of Stress to Aquatic Life')) %>%
-      add_polygons(data = box4, x = ~x, y = ~y, fillcolor = "#0072B2",opacity=0.6, line = list(width = 0),
+      add_polygons(data = box4, x = ~SampleDate, y = ~y, fillcolor = "#0072B2",opacity=0.6, line = list(width = 0),
                    hoverinfo="text", name =paste('No Probability of Stress to Aquatic Life')) %>%
       add_markers(data=totalHabitat, x= ~SampleDate, y= ~`Total Habitat (unitless)`,mode = 'scatter',
                   name="Total Habitat (unitless)",marker = list(color= '#535559'),
